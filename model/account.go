@@ -11,5 +11,5 @@ type Account struct {
 	Email     string `json:"email"`
 	Location  string `json:"location"`
 	IPAddress string `json:"ip_address"`
-	
+	Token     string `json:"token"`
 }

@@ -8,12 +8,13 @@ type AccountRequest struct {
 }
 
 type LoginAccount struct {
-	UserName string `json:"username"`
+	Email    string `json:"email"`
 	Password string `json:"password"`
 }
 
 type AccountResponse struct {
-	ID        uint   `json:"id"`
-	UserName  string `json:"username"`
-	Email     string `json:"email"`
+	ID       uint   `json:"id"`
+	UserName string `json:"username"`
+	Email    string `json:"email"`
+	Token    string `json:"token"`
 }
