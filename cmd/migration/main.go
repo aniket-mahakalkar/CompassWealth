@@ -2,7 +2,6 @@ package main
 
 import (
 	"compass-wealth/data"
-	"compass-wealth/model"
 
 	"github.com/charmbracelet/log"
 )
