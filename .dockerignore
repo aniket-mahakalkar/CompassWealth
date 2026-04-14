@@ -4,5 +4,4 @@
 Dockerfile
 README.md
 LICENSE
-# Optionally ignore the db if you want a fresh one every time
 # compass_wealth.db

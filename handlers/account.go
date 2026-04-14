@@ -12,10 +12,15 @@ type AccountHandler struct {
 	s services.AccountService
 }
 
-func NewAccountHandler(s services.AccountService) *AccountHandler {
-	return &AccountHandler{
+func NewAccountHandler(e *echo.Group,s services.AccountService) *AccountHandler {
+	h:= &AccountHandler{
 		s: s,
 	}
+
+	e.POST("/account", h.CreateAccount)
+	e.POST("/account/login", h.Login)
+
+	return h
 }
 
 func (h *AccountHandler) CreateAccount(c echo.Context) error {
@@ -30,3 +35,22 @@ func (h *AccountHandler) CreateAccount(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, "Account created successfully")
 }
+
+
+func (h *AccountHandler) Login(c echo.Context) error {
+	var req views.LoginAccount
+	if err := c.Bind(&req); err != nil {
+		return err
+	}
+
+	res, err := h.s.LoginAccount(req); 
+
+	if err != nil {
+		return  err
+	}
+
+	return c.JSON(http.StatusOK, views.Response{
+		Message: "Logged in successfully",
+		Data:    res,
+	})
+}	

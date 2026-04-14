@@ -1,6 +1,8 @@
 package web
 
 import (
+	"compass-wealth/handlers"
+	"compass-wealth/services"
 	"net/http"
 	"os"
 
@@ -13,6 +15,11 @@ func Init() {
 
 	e.Use(middleware.RequestLogger())
 	e.Use(middleware.Recover())
+
+	authGroup := e.Group("/auth")
+
+	accountService := *services.NewAccountService()
+	handlers.NewAccountHandler(authGroup, accountService)
 
 	e.GET("/", func(c echo.Context) error {
 		return c.String(http.StatusOK, "Hello, World!")
