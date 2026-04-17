@@ -44,7 +44,9 @@ func (h *AccountHandler) Login(c echo.Context) error {
 		return err
 	}
 
-	res, err := h.s.LoginAccount(req)
+	ip := c.RealIP()	
+
+	res, err := h.s.LoginAccount(req, ip)
 
 	if err != nil {
 		utils.ThrowError(err, "error in login")

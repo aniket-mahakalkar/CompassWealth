@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"compass-wealth/enums"
 	"os"
 	"time"
 
@@ -18,16 +19,18 @@ func getSecret() string {
 }
 
 type Claims struct {
-	ID    uint   `json:"id"`
-	Email string `json:"email"`
+	ID    uint        `json:"id"`
+	Email string      `json:"email"`
+	Role  enums.Roles `json:"role"`
 	jwt.RegisteredClaims
 }
 
-func GenerateToken(id uint, email string) (string, error) {
+func GenerateToken(id uint, email string, role enums.Roles) (string, error) {
 	expirationTime := time.Now().Add(72 * time.Hour)
 	claims := &Claims{
 		ID:    id,
 		Email: email,
+		Role:  role,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(expirationTime),
 		},

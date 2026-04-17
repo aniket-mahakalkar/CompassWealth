@@ -2,10 +2,13 @@ package services
 
 import (
 	"compass-wealth/data"
+	"compass-wealth/enums"
 	"compass-wealth/model"
 	"compass-wealth/utils"
 	"compass-wealth/views"
+	"encoding/json"
 	"errors"
+	"net/http"
 	"strings"
 
 	"gorm.io/gorm"
@@ -39,6 +42,11 @@ func (s *AccountService) CreateAccount(req views.AccountRequest) error {
 
 	account.UserName = req.UserName
 	account.Email = req.Email
+	if req.Role != nil {
+		account.Role = *req.Role
+	} else {
+		account.Role = enums.User
+	}
 
 	hashPas, err := utils.HashPassword(req.Password)
 	if err != nil {
@@ -62,7 +70,7 @@ func (s *AccountService) CreateAccount(req views.AccountRequest) error {
 	return nil
 }
 
-func (s *AccountService) LoginAccount(req views.LoginAccount) (views.AccountResponse, error) {
+func (s *AccountService) LoginAccount(req views.LoginAccount, ip string) (views.AccountResponse, error) {
 
 	if strings.TrimSpace(req.Email) == "" {
 		return views.AccountResponse{}, errors.New("email is required")
@@ -74,7 +82,8 @@ func (s *AccountService) LoginAccount(req views.LoginAccount) (views.AccountResp
 
 	var account model.Account
 
-	if err := s.db.Where("email = ?", req.Email).First(&account).Error; err != nil {
+	err := s.db.Where("email = ?", req.Email).First(&account).Error
+	if err != nil {
 		return views.AccountResponse{}, errors.New("email not found")
 	}
 
@@ -82,12 +91,14 @@ func (s *AccountService) LoginAccount(req views.LoginAccount) (views.AccountResp
 		return views.AccountResponse{}, errors.New("invalid password or email")
 	}
 
-	token, err := utils.GenerateToken(account.ID, account.Email)
+	token, err := utils.GenerateToken(account.ID, account.Email, account.Role)
 	if err != nil {
 		return views.AccountResponse{}, errors.New("error in generating token")
 	}
 
 	account.Token = token
+	account.IPAddress = ip
+
 	if err := s.db.Save(&account).Error; err != nil {
 		return views.AccountResponse{}, errors.New("error in saving token")
 	}
@@ -96,7 +107,54 @@ func (s *AccountService) LoginAccount(req views.LoginAccount) (views.AccountResp
 		ID:       account.ID,
 		UserName: account.UserName,
 		Email:    account.Email,
+		Role:     account.Role,
 		Token:    token,
 	}, nil
 
+}
+
+func (s *AccountService) UpdateUsername(req views.AccountRequest) error {
+	var account model.Account
+
+	if req.ID == 0 {
+		return errors.New("id is required")
+	}
+
+	if strings.TrimSpace(req.UserName) == "" {
+
+		return errors.New("username is required")
+	}
+
+	if err := s.db.Where("id = ?", req.ID).First(&account).Error; err != nil {
+		return errors.New("account not found")
+	}
+
+	account.UserName = req.UserName
+	if err := s.db.Save(&account).Error; err != nil {
+		return errors.New("error in updating username")
+	}
+
+	return nil
+}
+
+func GetLocationFromIP(ip string) (*string, error) {
+
+	if ip == "::1" || ip == "127.0.0.1" {
+		ip = "8.8.8.8"
+	}
+
+	url := "http://ip-api.com/json/" + ip
+
+	resp, err := http.Get(url)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	var location string
+	if err := json.NewDecoder(resp.Body).Decode(&location); err != nil {
+		return nil, err
+	}
+
+	return &location, nil
 }
